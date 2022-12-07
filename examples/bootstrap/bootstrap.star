@@ -1,12 +1,14 @@
 load("../../warpsys.star", "catalog_input_str")
 
+
 def bootstrap_build_step(src, script, extra_inputs=[]):
-    # build our input map, $PATH, and $CPATH based on the deps 
+    # build our input map, $PATH, and $CPATH based on the deps
     inputs = {}
 
     # add the bootstrapping debian rootfs
-    inputs["/"] = catalog_input_str(("warpsys.org/bootstrap/debian", "bullseye-1646092800", "amd64"))
-    # add the source catalog input 
+    inputs["/"] = catalog_input_str(
+        ("warpsys.org/bootstrap/debian", "bullseye-1646092800", "amd64"))
+    # add the source catalog input
     inputs["/src"] = catalog_input_str(src)
 
     for i in extra_inputs:
@@ -19,27 +21,37 @@ def bootstrap_build_step(src, script, extra_inputs=[]):
     inputs["$ARFLAGS"] = "literal:rvD"
 
     # create and return the protoformula
-    return {"protoformula": {
-        "inputs": inputs,
-        "action": {"script": {"interpreter": "/bin/sh", 
-                              "contents": script.split("\n")}},
-        "outputs": {"out": {
-            "from": "/out/warpsys-placeholder-prefix",
-            "packtype": "tar",
-        }}
-    }}
+    return {
+        "protoformula": {
+            "inputs": inputs,
+            "action": {
+                "script": {
+                    "interpreter": "/bin/sh",
+                    "contents": script.split("\n")
+                }
+            },
+            "outputs": {
+                "out": {
+                    "from": "/out/warpsys-placeholder-prefix",
+                    "packtype": "tar",
+                }
+            }
+        }
+    }
+
 
 def bootstrap_pack_step(binaries, libraries=[], extra_script=""):
     # list of dependencies needed for packing
     pack_deps = [
-	    ("warpsys.org/bootstrap/ldshim", "v1.0", "amd64"),
-	    ("warpsys.org/bootstrap/glibc", "v2.35", "amd64"),
-    ]    
+        ("warpsys.org/bootstrap/ldshim", "v1.0", "amd64"),
+        ("warpsys.org/bootstrap/glibc", "v2.35", "amd64"),
+    ]
 
     # create input map and $PATH
     inputs = {}
     # add the bootstrapping debian rootfs
-    inputs["/"] = catalog_input_str(("warpsys.org/bootstrap/debian", "bullseye-1646092800", "amd64"))
+    inputs["/"] = catalog_input_str(
+        ("warpsys.org/bootstrap/debian", "bullseye-1646092800", "amd64"))
     for dep in pack_deps:
         path = "/pkg/" + dep[0]
         inputs[path] = catalog_input_str(dep)
@@ -55,14 +67,16 @@ def bootstrap_pack_step(binaries, libraries=[], extra_script=""):
     # iterate over the libraries to pack as a (module_name, library_name) tuple
     # for each, create a cp command to add to our package
     for lib in libraries:
-        script = script + "cp /pkg/{module}/lib/{library} /pack/lib\n".format(module=lib[0], library=lib[1])
+        script = script + "cp /pkg/{module}/lib/{library} /pack/lib\n".format(
+            module=lib[0], library=lib[1])
 
     # iterate over the binaries to pack
     # for each, move the binary to dynbin and add an ldshim in bin
     for bin in binaries:
         script = script + "mv /pack/bin/{bin} /pack/dynbin\n".format(bin=bin)
-        script = script + "cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/{bin}\n".format(bin=bin)
-    
+        script = script + "cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/{bin}\n".format(
+            bin=bin)
+
     # add any extra script actions from the user
     script = script + extra_script
 
@@ -70,12 +84,20 @@ def bootstrap_pack_step(binaries, libraries=[], extra_script=""):
     script = script + "sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*\n"
 
     # create and return the protoformula
-    return {"protoformula": {
-        "inputs": inputs,
-        "action": {"script": {"interpreter": "/bin/sh", 
-                              "contents": script.split("\n")}},
-        "outputs": {"out": {
-            "from": "/pack",
-            "packtype": "tar",
-        }}
-    }}
+    return {
+        "protoformula": {
+            "inputs": inputs,
+            "action": {
+                "script": {
+                    "interpreter": "/bin/sh",
+                    "contents": script.split("\n")
+                }
+            },
+            "outputs": {
+                "out": {
+                    "from": "/pack",
+                    "packtype": "tar",
+                }
+            }
+        }
+    }

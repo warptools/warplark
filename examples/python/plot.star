@@ -3,24 +3,23 @@ load("warpsys.star", "catalog_input_str")
 load("warpsys.star", "gnu_build_step")
 load("warpsys.star", "zapp_pack_step")
 
-step_build = gnu_build_step(
-    src=("warpsys.org/python", "v3.10.4", "src"),
-    script="""mkdir -p /usr/lib/x86_64-linux-gnu
+step_build = gnu_build_step(src=("warpsys.org/python", "v3.10.4", "src"),
+                            script="""mkdir -p /usr/lib/x86_64-linux-gnu
     export CPPFLAGS=-I/pkg/warpsys.org/zlib/include
     cp -r /pkg/warpsys.org/zlib/lib/* /usr/lib/x86_64-linux-gnu
     cd /src/*
     ./configure --prefix=/warpsys-placeholder-prefix 
     make
     make DESTDIR=/out install""",
-    extra_inputs=[
-        ("warpsys.org/zlib", "v1.2.13", "amd64"),
-    ])
+                            extra_inputs=[
+                                ("warpsys.org/zlib", "v1.2.13", "amd64"),
+                            ])
 
 step_pack = zapp_pack_step(
-    binaries=["python3", "python3.10"], 
+    binaries=["python3", "python3.10"],
     extra_inputs=[
         ("warpsys.org/zlib", "v1.2.13", "amd64"),
-		("warpsys.org/findutils", "v4.9.0", "amd64"),
+        ("warpsys.org/findutils", "v4.9.0", "amd64"),
     ],
     libraries=[
         ("warpsys.org/bootstrap/glibc", "libc.so.6"),
