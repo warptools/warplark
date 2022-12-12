@@ -1,0 +1,76 @@
+{
+	"plot.v1": {
+		"inputs": {},
+		"outputs": {},
+		"steps": {
+			"build": {
+				"protoformula": {
+					"action": {
+						"script": {
+							"contents": [
+								"cd /src/*",
+								"    cp -vpR -v /pkg/warpsys.org/mpfr/* mpfr",
+								"    cp -vpR -v /pkg/warpsys.org/gmp/* gmp",
+								"    cp -vpR -v /pkg/warpsys.org/mpc/* mpc",
+								"    mkdir /prefix/build",
+								"    cd /prefix/build",
+								"    /src/*/configure --prefix=/warpsys-placeholder-prefix --disable-multilib --enable-languages=c,c++ LDFLAGS=-Wl,-rpath=XORIGIN/../lib",
+								"    make",
+								"    make DESTDIR=/out install"
+							],
+							"interpreter": "/bin/sh"
+						}
+					},
+					"inputs": {
+						"$ARFLAGS": "literal:rvD",
+						"$LDFLAGS": "literal:-Wl,-rpath=XORIGIN/../lib",
+						"$SOURCE_DATE_EPOCH": "literal:1262304000",
+						"/": "catalog:warpsys.org/bootstrap/debian:bullseye-1646092800:amd64",
+						"/pkg/warpsys.org/gmp": "catalog:warpsys.org/gmp:v6.2.1:src",
+						"/pkg/warpsys.org/mpc": "catalog:warpsys.org/mpc:v1.2.1:src",
+						"/pkg/warpsys.org/mpfr": "catalog:warpsys.org/mpfr:v4.1.0:src",
+						"/src": "catalog:warpsys.org/gcc:v11.2.0:src"
+					},
+					"outputs": {
+						"out": {
+							"from": "/out/warpsys-placeholder-prefix",
+							"packtype": "tar"
+						}
+					}
+				}
+			},
+			"pack": {
+				"protoformula": {
+					"action": {
+						"script": {
+							"contents": [
+								"mkdir -vp /pack/lib",
+								"    mkdir -vp /pack/dynbin",
+								"    cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib",
+								"    cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 /pack/lib",
+								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libm.so.6 /pack/lib",
+								"mv /pack/bin/gcc /pack/dynbin",
+								"cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/gcc",
+								"sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*",
+								""
+							],
+							"interpreter": "/bin/sh"
+						}
+					},
+					"inputs": {
+						"/": "catalog:warpsys.org/bootstrap/debian:bullseye-1646092800:amd64",
+						"/pack": "pipe:build:out",
+						"/pkg/warpsys.org/bootstrap/glibc": "catalog:warpsys.org/bootstrap/glibc:v2.35:amd64",
+						"/pkg/warpsys.org/bootstrap/ldshim": "catalog:warpsys.org/bootstrap/ldshim:v1.0:amd64"
+					},
+					"outputs": {
+						"out": {
+							"from": "/pack",
+							"packtype": "tar"
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,73 @@
+{
+	"plot.v1": {
+		"inputs": {},
+		"outputs": {},
+		"steps": {
+			"build": {
+				"protoformula": {
+					"action": {
+						"script": {
+							"contents": [
+								"cd /src/*",
+								"    ./configure --prefix=/warpsys-placeholder-prefix ",
+								"    make",
+								"    make DESTDIR=/out install"
+							],
+							"interpreter": "/bin/sh"
+						}
+					},
+					"inputs": {
+						"$ARFLAGS": "literal:rvD",
+						"$LDFLAGS": "literal:-Wl,-rpath=XORIGIN/../lib",
+						"$SOURCE_DATE_EPOCH": "literal:1262304000",
+						"/": "catalog:warpsys.org/bootstrap/debian:bullseye-1646092800:amd64",
+						"/src": "catalog:warpsys.org/gawk:v5.1.1:src"
+					},
+					"outputs": {
+						"out": {
+							"from": "/out/warpsys-placeholder-prefix",
+							"packtype": "tar"
+						}
+					}
+				}
+			},
+			"pack": {
+				"protoformula": {
+					"action": {
+						"script": {
+							"contents": [
+								"mkdir -vp /pack/lib",
+								"    mkdir -vp /pack/dynbin",
+								"    cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib",
+								"    cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 /pack/lib",
+								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libdl.so.2 /pack/lib",
+								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libpthread.so.0 /pack/lib",
+								"mv /pack/bin/awk /pack/dynbin",
+								"cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/awk",
+								"mv /pack/bin/gawk /pack/dynbin",
+								"cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/gawk",
+								"mv /pack/bin/gawk-5.1.1 /pack/dynbin",
+								"cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/gawk-5.1.1",
+								"sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*",
+								""
+							],
+							"interpreter": "/bin/sh"
+						}
+					},
+					"inputs": {
+						"/": "catalog:warpsys.org/bootstrap/debian:bullseye-1646092800:amd64",
+						"/pack": "pipe:build:out",
+						"/pkg/warpsys.org/bootstrap/glibc": "catalog:warpsys.org/bootstrap/glibc:v2.35:amd64",
+						"/pkg/warpsys.org/bootstrap/ldshim": "catalog:warpsys.org/bootstrap/ldshim:v1.0:amd64"
+					},
+					"outputs": {
+						"out": {
+							"from": "/pack",
+							"packtype": "tar"
+						}
+					}
+				}
+			}
+		}
+	}
+}

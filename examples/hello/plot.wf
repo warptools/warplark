@@ -1,0 +1,30 @@
+{
+	"plot.v1": {
+		"inputs": {},
+		"outputs": {},
+		"steps": {
+			"one": {
+				"protoformula": {
+					"action": {
+						"script": {
+							"contents": [
+								"",
+								"    bash --version",
+								"    echo hello, world.",
+								"    ls",
+								"    "
+							],
+							"interpreter": "/pkg/bash/bin/bash"
+						}
+					},
+					"inputs": {
+						"$PATH": "literal:/pkg/busybox/bin:/pkg/bash/bin:",
+						"/pkg/bash": "catalog:warpsys.org/bash:v5.1.16:amd64",
+						"/pkg/busybox": "catalog:warpsys.org/busybox:v1.35.0:amd64-static"
+					},
+					"outputs": {}
+				}
+			}
+		}
+	}
+}
