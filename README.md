@@ -22,4 +22,9 @@ go install ./...
 
 ## Examples 
 
-The `examples/` folder contains a variety of examples. Running the `eval.sh` script will convert all Starlark plots into JSON for use with Warpforge.
+The `examples/` folder contains a variety of examples. These can be evaluted into Warpforge plots, then run with Warpforge. This will require that the `warplark` binary is in your `$PATH`.
+
+```
+warpforge -v plan generate examples/...
+warpforge run examples/...
+```
