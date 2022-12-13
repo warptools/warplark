@@ -28,3 +28,28 @@ The `examples/` folder contains a variety of examples. These can be evaluted int
 warpforge -v plan generate examples/...
 warpforge run examples/...
 ```
+
+## Writing Warplark Code
+
+Warplark uses `starlark-go` to implement Starlark. The [language spec](https://github.com/google/starlark-go/blob/master/doc/spec.md) provides the full details of the language.
+
+### Pragmas
+
+Warplark files begin with special lines known as *pragmas*. These provide information about the file which Warplark uses to determine how to parse it. A pragma is written in the format:
+
+```
+#+warplark [pragma-name] [pragma-value]
+```
+
+Pragmas must be provided at the start of the file. Once a non-pragma line is hit, Warplark will stop processing pragams.
+
+The `version` pragma is mandatory for all Warplark files. Version 0 is currently used to denote the alpha status of Warplark.
+
+#### Supported Pragmas
+
+| Pragma Name | Value Type | Description                      | Example                |
+|-------------|------------|----------------------------------|------------------------|
+| version     | int        | Version of Warplark used by file | `#+warplark version 0` |
+|             |            |                                  |                        |
+
+

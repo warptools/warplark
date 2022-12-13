@@ -2,15 +2,22 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"go.starlark.net/lib/json"
 	"go.starlark.net/starlark"
 )
 
 var basePath string
+
+type Pragmas struct {
+	version *int
+}
 
 func load(_ *starlark.Thread, module string) (starlark.StringDict, error) {
 	// find the module file by checking parent directories
@@ -41,9 +48,62 @@ func load(_ *starlark.Thread, module string) (starlark.StringDict, error) {
 	return globals, err
 }
 
+func parsePragmas(path string) (Pragmas, error) {
+	txt, err := ioutil.ReadFile(path)
+	if err != nil {
+		return Pragmas{}, err
+	}
+
+	// this regex matches a string in the format of
+	// #+ warplark pragma-key pragma-value
+	pragmaRe, err := regexp.Compile("#\\+warplark\\s+([^\\s]+)\\s+(.*)")
+	if err != nil {
+		return Pragmas{}, err
+	}
+
+	pragmas := Pragmas{}
+
+	lines := strings.Split(string(txt), "\n")
+	for lineNum, line := range lines {
+		line = strings.TrimSpace(line)
+		matches := pragmaRe.FindStringSubmatch(line)
+		if matches == nil {
+			// no pragma on this line, stop parsing pragmas
+			break
+		}
+		pragmaKey := strings.ToLower(matches[1])
+		pragmaValue := matches[2]
+
+		switch pragmaKey {
+		case "version":
+			version, err := strconv.Atoi(pragmaValue)
+			if err != nil {
+				return Pragmas{}, fmt.Errorf("failed to parse version pragma. expected int, got %q", pragmaValue)
+			}
+			pragmas.version = &version
+		default:
+			return Pragmas{}, fmt.Errorf("unknown pragma %q at %s:%d", pragmaKey, path, lineNum)
+		}
+	}
+
+	return pragmas, nil
+}
+
 // Execute Starlark program in a file.
 func execFile(path string) {
 	basePath = filepath.Dir(path)
+
+	pragmas, err := parsePragmas(path)
+	if err != nil {
+		panic(err)
+	}
+
+	if pragmas.version == nil {
+		panic("no version pragma defined!")
+	} else if *pragmas.version != 0 {
+		panic("unsupported warplark version")
+	}
+
 	thread := &starlark.Thread{Name: "my thread", Load: load}
 	globals, err := starlark.ExecFile(thread, path, nil, starlark.StringDict{"json": json.Module})
 	if err != nil {

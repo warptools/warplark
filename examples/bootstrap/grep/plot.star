@@ -1,3 +1,4 @@
+#+warplark version 0
 load("../../warpsys.star", "plot")
 load("../../warpsys.star", "catalog_input_str")
 load("../bootstrap.star", "bootstrap_build_step")
