@@ -9,26 +9,24 @@
 						"script": {
 							"contents": [
 								"mkdir -p /bin /tmp /prefix /usr/include/",
-								"\tln -s /pkg/warpsys.org/bootstrap/glibc/lib /prefix/lib",
-								"\tln -s /pkg/warpsys.org/bootstrap/glibc/lib /lib",
-								"\tln -s /pkg/warpsys.org/bootstrap/busybox/bin/sh /bin/sh",
-								"\tln -s /pkg/warpsys.org/bootstrap/gcc/bin/cpp /lib/cpp",
-								"\t",
-								"    ln -s /pkg/warpsys.org/bootstrap/gcc/bin/gcc /bin/cc",
-								"    ln -s /pkg/warpsys.org/bootstrap/gcc/bin/cpp /lib/cpp",
-								"    cd /src/*",
-								"    sh Configure -Dcc=/pkg/warpsys.org/bootstrap/gcc/bin/gcc -Dprefix=/warpsys-placeholder-prefix -Aldflags=-Wl,-rpath=XORIGIN/../lib -Aarflags=rvD -de",
-								"    make",
-								"    make DESTDIR=/out install",
-								"    sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /out/warpsys-placeholder-prefix/bin/*",
-								"    "
+								"ln -s /pkg/warpsys.org/bootstrap/glibc/lib /prefix/lib",
+								"ln -s /pkg/warpsys.org/bootstrap/glibc/lib /lib",
+								"ln -s /pkg/warpsys.org/bootstrap/busybox/bin/sh /bin/sh",
+								"ln -s /pkg/warpsys.org/bootstrap/gcc/bin/cpp /lib/cpp",
+								"ln -s /pkg/warpsys.org/bootstrap/gcc/bin/gcc /bin/cc",
+								"ln -s /pkg/warpsys.org/bootstrap/gcc/bin/cpp /lib/cpp",
+								"cd /src/*",
+								"sh Configure -Dcc=/pkg/warpsys.org/bootstrap/gcc/bin/gcc -Dprefix=/warpsys-placeholder-prefix -Aldflags=-Wl,-rpath=XORIGIN/../lib -Aarflags=rvD -de",
+								"make",
+								"make DESTDIR=/out install",
+								"sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /out/warpsys-placeholder-prefix/bin/*"
 							],
 							"interpreter": "/pkg/warpsys.org/bootstrap/busybox/bin/sh"
 						}
 					},
 					"inputs": {
 						"$ARFLAGS": "literal:rvD",
-						"$CPATH": "literal:/pkg/warpsys.org/bootstrap/glibc/include:/pkg/warpsys.org/bootstrap/busybox/include:/pkg/warpsys.org/bootstrap/ldshim/include:/pkg/warpsys.org/bootstrap/make/include:/pkg/warpsys.org/bootstrap/gcc/include:/pkg/warpsys.org/bootstrap/grep/include:/pkg/warpsys.org/bootstrap/coreutils/include:/pkg/warpsys.org/bootstrap/binutils/include:/pkg/warpsys.org/bootstrap/sed/include:/pkg/warpsys.org/bootstrap/gawk/include:/pkg/warpsys.org/findutils/include:/pkg/warpsys.org/diffutils/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu",
+						"$CPATH": "literal:/pkg/warpsys.org/bootstrap/glibc/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu/pkg/warpsys.org/bootstrap/busybox/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu/pkg/warpsys.org/bootstrap/ldshim/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu/pkg/warpsys.org/bootstrap/make/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu/pkg/warpsys.org/bootstrap/gcc/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu/pkg/warpsys.org/bootstrap/grep/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu/pkg/warpsys.org/bootstrap/coreutils/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu/pkg/warpsys.org/bootstrap/binutils/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu/pkg/warpsys.org/bootstrap/sed/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu/pkg/warpsys.org/bootstrap/gawk/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu/pkg/warpsys.org/findutils/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu/pkg/warpsys.org/diffutils/include:/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu",
 						"$LDFLAGS": "literal:-Wl,-rpath=XORIGIN/../lib",
 						"$LD_LIBRARY_PATH": "literal:/pkg/warpsys.org/bootstrap/glibc/lib:/pkg/warpsys.org/bootstrap/busybox/lib:/pkg/warpsys.org/bootstrap/ldshim/lib:/pkg/warpsys.org/bootstrap/make/lib:/pkg/warpsys.org/bootstrap/gcc/lib:/pkg/warpsys.org/bootstrap/grep/lib:/pkg/warpsys.org/bootstrap/coreutils/lib:/pkg/warpsys.org/bootstrap/binutils/lib:/pkg/warpsys.org/bootstrap/sed/lib:/pkg/warpsys.org/bootstrap/gawk/lib:/pkg/warpsys.org/findutils/lib:/pkg/warpsys.org/diffutils/lib:",
 						"$PATH": "literal:/pkg/warpsys.org/bootstrap/glibc/bin:/pkg/warpsys.org/bootstrap/busybox/bin:/pkg/warpsys.org/bootstrap/ldshim/bin:/pkg/warpsys.org/bootstrap/make/bin:/pkg/warpsys.org/bootstrap/gcc/bin:/pkg/warpsys.org/bootstrap/grep/bin:/pkg/warpsys.org/bootstrap/coreutils/bin:/pkg/warpsys.org/bootstrap/binutils/bin:/pkg/warpsys.org/bootstrap/sed/bin:/pkg/warpsys.org/bootstrap/gawk/bin:/pkg/warpsys.org/findutils/bin:/pkg/warpsys.org/diffutils/bin:",
@@ -62,9 +60,9 @@
 						"script": {
 							"contents": [
 								"mkdir -vp /pack/lib",
-								"    mkdir -vp /pack/dynbin",
-								"    cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib",
-								"    cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 /pack/lib",
+								"mkdir -vp /pack/dynbin",
+								"cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib",
+								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 /pack/lib",
 								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libdl.so.2 /pack/lib",
 								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libm.so.6 /pack/lib",
 								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libcrypt.so.1 /pack/lib",
@@ -73,12 +71,11 @@
 								"mv /pack/bin/perl5.36.0 /pack/dynbin",
 								"cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/perl5.36.0",
 								"sed -i \"s/\\$config_tag1 = '\\([^ ]\\+\\)*.*/\\$config_tag1 = '\\1'/\" /pack/bin/perlbug /pack/bin/perlthanks",
-								"    sed -i \"s/Configuration time:.*//\" /pack/lib/perl5/5.36.0/x86_64-linux/CORE/config.h /pack/lib/perl5/5.36.0/x86_64-linux/Config_heavy.pl",
-								"    sed -i \"s/cf_time='[^']\\+/cf_time='`date --date='@1262304000'`/\" /pack/lib/perl5/5.36.0/x86_64-linux/Config_heavy.pl",
-								"    sed -i \"s/Target system.*//\" /pack/lib/perl5/5.36.0/x86_64-linux/CORE/config.h /pack/lib/perl5/5.36.0/x86_64-linux/Config_heavy.pl",
-								"    sed -i \"s/myuname='.*/myuname='linux'/\" /pack/lib/perl5/5.36.0/x86_64-linux/Config_heavy.pl",
-								"    sed -i \"s/[[:digit:]]\\+.[[:digit:]]\\+.[[:digit:]]\\+-[[:digit:]]\\+/linux/\" /pack/lib/perl5/5.36.0/x86_64-linux/Errno.pm /pack/lib/perl5/5.36.0/x86_64-linux/CORE/config.h /pack/lib/perl5/5.36.0/x86_64-linux/Config_heavy.pl /pack/lib/perl5/5.36.0/x86_64-linux/Config.pm",
-								"    ",
+								"sed -i \"s/Configuration time:.*//\" /pack/lib/perl5/5.36.0/x86_64-linux/CORE/config.h /pack/lib/perl5/5.36.0/x86_64-linux/Config_heavy.pl",
+								"sed -i \"s/cf_time='[^']\\+/cf_time='`date --date='@1262304000'`/\" /pack/lib/perl5/5.36.0/x86_64-linux/Config_heavy.pl",
+								"sed -i \"s/Target system.*//\" /pack/lib/perl5/5.36.0/x86_64-linux/CORE/config.h /pack/lib/perl5/5.36.0/x86_64-linux/Config_heavy.pl",
+								"sed -i \"s/myuname='.*/myuname='linux'/\" /pack/lib/perl5/5.36.0/x86_64-linux/Config_heavy.pl",
+								"sed -i \"s/[[:digit:]]\\+.[[:digit:]]\\+.[[:digit:]]\\+-[[:digit:]]\\+/linux/\" /pack/lib/perl5/5.36.0/x86_64-linux/Errno.pm /pack/lib/perl5/5.36.0/x86_64-linux/CORE/config.h /pack/lib/perl5/5.36.0/x86_64-linux/Config_heavy.pl /pack/lib/perl5/5.36.0/x86_64-linux/Config.pm",
 								"sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*"
 							],
 							"interpreter": "/pkg/warpsys.org/bootstrap/busybox/bin/sh"

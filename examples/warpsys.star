@@ -13,19 +13,19 @@ def script_protoformula(inputs, interp, script):
     pathstr = "literal:"
     for i in inputs.keys():
         pathstr = pathstr + "{path}/bin:".format(path=i)
-    inputs["$PATH"] = pathstr
-    protoformula = {
-        "protoformula": {
-            "inputs": inputs,
-            "action": {
-                "script": {
-                    "interpreter": interp,
-                    "contents": script.split("\n")
-                }
-            },
-            "outputs": {}
+        inputs["$PATH"] = pathstr
+        protoformula = {
+            "protoformula": {
+                "inputs": inputs,
+                "action": {
+                    "script": {
+                        "interpreter": interp,
+                        "contents": script
+                    }
+                },
+                "outputs": {}
+            }
         }
-    }
     return protoformula
 
 
@@ -57,7 +57,7 @@ def gnu_build_step(src, script, extra_inputs=[]):
         pathstr = pathstr + path + "/bin:"
         cpathstr = cpathstr + path + "/include:"
         ldpathstr = ldpathstr + path + "/lib:"
-    cpathstr = cpathstr + "/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu"
+        cpathstr = cpathstr + "/pkg/warpsys.org/bootstrap/glibc/include/x86_64-linux-gnu"
 
     # add the source catalog input
     inputs["/src"] = catalog_input_str(src)
@@ -75,12 +75,13 @@ def gnu_build_step(src, script, extra_inputs=[]):
     inputs["$ARFLAGS"] = "literal:rvD"
 
     # this script runs before the build script to set up the environment
-    setup_script = """mkdir -p /bin /tmp /prefix /usr/include/
-	ln -s /pkg/warpsys.org/bootstrap/glibc/lib /prefix/lib
-	ln -s /pkg/warpsys.org/bootstrap/glibc/lib /lib
-	ln -s /pkg/warpsys.org/bootstrap/busybox/bin/sh /bin/sh
-	ln -s /pkg/warpsys.org/bootstrap/gcc/bin/cpp /lib/cpp
-	"""
+    setup_script = [
+        "mkdir -p /bin /tmp /prefix /usr/include/",
+        "ln -s /pkg/warpsys.org/bootstrap/glibc/lib /prefix/lib",
+        "ln -s /pkg/warpsys.org/bootstrap/glibc/lib /lib",
+        "ln -s /pkg/warpsys.org/bootstrap/busybox/bin/sh /bin/sh",
+        "ln -s /pkg/warpsys.org/bootstrap/gcc/bin/cpp /lib/cpp"
+    ]
     script = setup_script + script
 
     # create and return the protoformula
@@ -90,7 +91,7 @@ def gnu_build_step(src, script, extra_inputs=[]):
             "action": {
                 "script": {
                     "interpreter": "/pkg/warpsys.org/bootstrap/busybox/bin/sh",
-                    "contents": script.split("\n")
+                    "contents": script
                 }
             },
             "outputs": {
@@ -103,7 +104,7 @@ def gnu_build_step(src, script, extra_inputs=[]):
     }
 
 
-def zapp_pack_step(binaries, libraries=[], extra_script="", extra_inputs=[]):
+def zapp_pack_step(binaries, libraries=[], extra_script=[], extra_inputs=[]):
     # list of dependencies needed for packing
     pack_deps = [
         ("warpsys.org/bootstrap/sed", "v4.8", "amd64"),
@@ -119,7 +120,7 @@ def zapp_pack_step(binaries, libraries=[], extra_script="", extra_inputs=[]):
         path = "/pkg/" + dep[0]
         inputs[path] = catalog_input_str(dep)
         pathstr = pathstr + path + "/bin:"
-    inputs["$PATH"] = pathstr
+        inputs["$PATH"] = pathstr
 
     # add the output of our build to the inputs
     inputs["/pack"] = "pipe:build:out"
@@ -128,29 +129,30 @@ def zapp_pack_step(binaries, libraries=[], extra_script="", extra_inputs=[]):
         ("warpsys.org/bootstrap/glibc", "v2.35", "ld-amd64"))
 
     # create dirs for packing, copy ld to our package as a library
-    script = """mkdir -vp /pack/lib
-    mkdir -vp /pack/dynbin
-    cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib
-    """
+    script = [
+        "mkdir -vp /pack/lib", "mkdir -vp /pack/dynbin",
+        "cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib"
+    ]
 
     # iterate over the libraries to pack as a (module_name, library_name) tuple
     # for each, create a cp command to add to our package
     for lib in libraries:
-        script = script + "cp /pkg/{module}/lib/{library} /pack/lib\n".format(
-            module=lib[0], library=lib[1])
+        script.append("cp /pkg/{module}/lib/{library} /pack/lib".format(
+            module=lib[0], library=lib[1]))
 
     # iterate over the binaries to pack
     # for each, move the binary to dynbin and add an ldshim in bin
     for bin in binaries:
-        script = script + "mv /pack/bin/{bin} /pack/dynbin\n".format(bin=bin)
-        script = script + "cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/{bin}\n".format(
-            bin=bin)
+        script.append("mv /pack/bin/{bin} /pack/dynbin".format(bin=bin))
+        script.append(
+            "cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/{bin}".
+            format(bin=bin))
 
     # add any extra script actions from the user
     script = script + extra_script
 
     # apply XORIGIN hack to all dynbin binaries
-    script = script + "\nsed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*"
+    script.append("sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*")
 
     # create and return the protoformula
     return {
@@ -159,7 +161,7 @@ def zapp_pack_step(binaries, libraries=[], extra_script="", extra_inputs=[]):
             "action": {
                 "script": {
                     "interpreter": "/pkg/warpsys.org/bootstrap/busybox/bin/sh",
-                    "contents": script.split("\n")
+                    "contents": script
                 }
             },
             "outputs": {

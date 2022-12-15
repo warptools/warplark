@@ -4,17 +4,18 @@ load("warpsys.star", "catalog_input_str")
 load("warpsys.star", "gnu_build_step")
 load("warpsys.star", "zapp_pack_step")
 
-step_build = gnu_build_step(src=("warpsys.org/python", "v3.10.4", "src"),
-                            script="""mkdir -p /usr/lib/x86_64-linux-gnu
-    export CPPFLAGS=-I/pkg/warpsys.org/zlib/include
-    cp -r /pkg/warpsys.org/zlib/lib/* /usr/lib/x86_64-linux-gnu
-    cd /src/*
-    ./configure --prefix=/warpsys-placeholder-prefix 
-    make
-    make DESTDIR=/out install""",
-                            extra_inputs=[
-                                ("warpsys.org/zlib", "v1.2.13", "amd64"),
-                            ])
+step_build = gnu_build_step(
+    src=("warpsys.org/python", "v3.10.4", "src"),
+    script=[
+        "mkdir -p /usr/lib/x86_64-linux-gnu",
+        "export CPPFLAGS=-I/pkg/warpsys.org/zlib/include",
+        "cp -r /pkg/warpsys.org/zlib/lib/* /usr/lib/x86_64-linux-gnu",
+        "cd /src/*", "./configure --prefix=/warpsys-placeholder-prefix ",
+        "make", "make DESTDIR=/out install"
+    ],
+    extra_inputs=[
+        ("warpsys.org/zlib", "v1.2.13", "amd64"),
+    ])
 
 step_pack = zapp_pack_step(
     binaries=["python3", "python3.10"],
@@ -31,7 +32,7 @@ step_pack = zapp_pack_step(
         ("warpsys.org/bootstrap/glibc", "libcrypt.so.1"),
         ("warpsys.org/zlib", "libz.so.1"),
     ],
-    extra_script="find /pack -type d -name __pycache__ -exec rm -rf {} +")
+    extra_script=["find /pack -type d -name __pycache__ -exec rm -rf {} +"])
 
 # for the pack step to work, the built step must be named "build"
 # due to the pipe used in pack

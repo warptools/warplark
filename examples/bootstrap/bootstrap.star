@@ -1,4 +1,4 @@
-load("../../warpsys.star", "catalog_input_str")
+load("warpsys.star", "catalog_input_str")
 
 
 def bootstrap_build_step(src, script, extra_inputs=[]):
@@ -27,7 +27,7 @@ def bootstrap_build_step(src, script, extra_inputs=[]):
             "action": {
                 "script": {
                     "interpreter": "/bin/sh",
-                    "contents": script.split("\n")
+                    "contents": script
                 }
             },
             "outputs": {
@@ -40,7 +40,7 @@ def bootstrap_build_step(src, script, extra_inputs=[]):
     }
 
 
-def bootstrap_pack_step(binaries, libraries=[], extra_script=""):
+def bootstrap_pack_step(binaries, libraries=[], extra_script=[]):
     # list of dependencies needed for packing
     pack_deps = [
         ("warpsys.org/bootstrap/ldshim", "v1.0", "amd64"),
@@ -60,28 +60,30 @@ def bootstrap_pack_step(binaries, libraries=[], extra_script=""):
     inputs["/pack"] = "pipe:build:out"
 
     # create dirs for packing, copy ld to our package as a library
-    script = """mkdir -vp /pack/lib
-    mkdir -vp /pack/dynbin
-    cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib
-    """
+    script = [
+        "mkdir -vp /pack/lib", "mkdir -vp /pack/dynbin",
+        "cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib"
+    ]
+
     # iterate over the libraries to pack as a (module_name, library_name) tuple
     # for each, create a cp command to add to our package
     for lib in libraries:
-        script = script + "cp /pkg/{module}/lib/{library} /pack/lib\n".format(
-            module=lib[0], library=lib[1])
+        script.append("cp /pkg/{module}/lib/{library} /pack/lib".format(
+            module=lib[0], library=lib[1]))
 
     # iterate over the binaries to pack
     # for each, move the binary to dynbin and add an ldshim in bin
     for bin in binaries:
-        script = script + "mv /pack/bin/{bin} /pack/dynbin\n".format(bin=bin)
-        script = script + "cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/{bin}\n".format(
-            bin=bin)
+        script.append("mv /pack/bin/{bin} /pack/dynbin".format(bin=bin))
+        script.append(
+            "cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/{bin}".
+            format(bin=bin))
 
     # add any extra script actions from the user
     script = script + extra_script
 
     # apply XORIGIN hack to all dynbin binaries
-    script = script + "sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*\n"
+    script.append("sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*")
 
     # create and return the protoformula
     return {
@@ -90,7 +92,7 @@ def bootstrap_pack_step(binaries, libraries=[], extra_script=""):
             "action": {
                 "script": {
                     "interpreter": "/bin/sh",
-                    "contents": script.split("\n")
+                    "contents": script
                 }
             },
             "outputs": {

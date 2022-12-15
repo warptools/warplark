@@ -9,10 +9,10 @@
 						"script": {
 							"contents": [
 								"cd /src/*",
-								"    make defconfig",
-								"    sed -e 's/.*CONFIG_SELINUXENABLED.*/CONFIG_SELINUXENABLED=n/' -i .config",
-								"    make",
-								"    LDFLAGS='--static' make CONFIG_PREFIX=/out/warpsys-placeholder-prefix install"
+								"make defconfig",
+								"sed -e 's/.*CONFIG_SELINUXENABLED.*/CONFIG_SELINUXENABLED=n/' -i .config",
+								"make",
+								"LDFLAGS='--static' make CONFIG_PREFIX=/out/warpsys-placeholder-prefix install"
 							],
 							"interpreter": "/bin/sh"
 						}

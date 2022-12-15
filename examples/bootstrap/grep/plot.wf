@@ -9,9 +9,9 @@
 						"script": {
 							"contents": [
 								"cd /src/*",
-								"    ./configure --prefix=/warpsys-placeholder-prefix ",
-								"    make",
-								"    make DESTDIR=/out install"
+								"./configure --prefix=/warpsys-placeholder-prefix ",
+								"make",
+								"make DESTDIR=/out install"
 							],
 							"interpreter": "/bin/sh"
 						}
@@ -37,14 +37,13 @@
 						"script": {
 							"contents": [
 								"mkdir -vp /pack/lib",
-								"    mkdir -vp /pack/dynbin",
-								"    cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib",
-								"    cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 /pack/lib",
+								"mkdir -vp /pack/dynbin",
+								"cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib",
+								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 /pack/lib",
 								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libdl.so.2 /pack/lib",
 								"mv /pack/bin/grep /pack/dynbin",
 								"cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/grep",
-								"sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*",
-								""
+								"sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*"
 							],
 							"interpreter": "/bin/sh"
 						}

@@ -9,9 +9,9 @@
 						"script": {
 							"contents": [
 								"mkdir -p /out/warpsys-placeholder-prefix/bin",
-								"    cd /src",
-								"    make",
-								"    cp ldshim /out/warpsys-placeholder-prefix/bin"
+								"cd /src",
+								"make",
+								"cp ldshim /out/warpsys-placeholder-prefix/bin"
 							],
 							"interpreter": "/bin/sh"
 						}

@@ -9,14 +9,14 @@
 						"script": {
 							"contents": [
 								"cd /src/*",
-								"    cp -vpR -v /pkg/warpsys.org/mpfr/* mpfr",
-								"    cp -vpR -v /pkg/warpsys.org/gmp/* gmp",
-								"    cp -vpR -v /pkg/warpsys.org/mpc/* mpc",
-								"    mkdir /prefix/build",
-								"    cd /prefix/build",
-								"    /src/*/configure --prefix=/warpsys-placeholder-prefix --disable-multilib --enable-languages=c,c++ LDFLAGS=-Wl,-rpath=XORIGIN/../lib",
-								"    make",
-								"    make DESTDIR=/out install"
+								"cp -vpR -v /pkg/warpsys.org/mpfr/* mpfr",
+								"cp -vpR -v /pkg/warpsys.org/gmp/* gmp",
+								"cp -vpR -v /pkg/warpsys.org/mpc/* mpc",
+								"mkdir /prefix/build",
+								"cd /prefix/build",
+								"/src/*/configure --prefix=/warpsys-placeholder-prefix --disable-multilib --enable-languages=c,c++ LDFLAGS=-Wl,-rpath=XORIGIN/../lib",
+								"make",
+								"make DESTDIR=/out install"
 							],
 							"interpreter": "/bin/sh"
 						}
@@ -45,14 +45,13 @@
 						"script": {
 							"contents": [
 								"mkdir -vp /pack/lib",
-								"    mkdir -vp /pack/dynbin",
-								"    cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib",
-								"    cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 /pack/lib",
+								"mkdir -vp /pack/dynbin",
+								"cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib",
+								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 /pack/lib",
 								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libm.so.6 /pack/lib",
 								"mv /pack/bin/gcc /pack/dynbin",
 								"cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/gcc",
-								"sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*",
-								""
+								"sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*"
 							],
 							"interpreter": "/bin/sh"
 						}

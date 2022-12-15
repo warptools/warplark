@@ -8,11 +8,9 @@
 					"action": {
 						"script": {
 							"contents": [
-								"",
-								"    bash --version",
-								"    echo hello, world.",
-								"    ls",
-								"    "
+								"bash --version",
+								"echo hello, world.",
+								"ls"
 							],
 							"interpreter": "/pkg/bash/bin/bash"
 						}
