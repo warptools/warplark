@@ -50,3 +50,8 @@ The `version` pragma is mandatory for all Warplark files. Version 0 is currently
 | Pragma Name | Value Type | Description                      | Example                |
 |-------------|------------|----------------------------------|------------------------|
 | version     | int        | Version of Warplark used by file | `#+warplark version 0` |
+
+
+## License
+
+SPDX-License-Identifier: Apache-2.0 OR MIT
