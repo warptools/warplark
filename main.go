@@ -13,36 +13,43 @@ import (
 	"go.starlark.net/starlark"
 )
 
-var basePath string
-
 type Pragmas struct {
 	version *int
 }
+type loader struct {
+	basePath string
+}
 
-func load(_ *starlark.Thread, module string) (starlark.StringDict, error) {
+func (l *loader) Load(_ *starlark.Thread, module string) (starlark.StringDict, error) {
 	// find the module file by checking parent directories
 	// until the first match is found
-	file := filepath.Join(basePath, module)
+	file := filepath.Join(l.basePath, module)
 	for {
 		_, err := os.Stat(file)
 		if err == nil {
 			// found it!
 			break
-		} else if file == "/"+module {
+		}
+		if file == "/"+module {
 			// hit root directory, fail
 			panic(fmt.Sprintf("failed to locate module %q", module))
-		} else if os.IsNotExist(err) {
+		}
+		if os.IsNotExist(err) {
 			// file not found, check the parent dir
 			currentDir := filepath.Dir(file)
 			parentDir := filepath.Dir(currentDir)
 			file = filepath.Join(parentDir, module)
-		} else {
-			// error doing stat, fail
-			panic(fmt.Sprintf("error locating module %q: %s", module, err))
+			continue
 		}
+		// error doing stat, fail
+		panic(fmt.Sprintf("error locating module %q: %s", module, err))
 	}
-
-	thread := &starlark.Thread{Name: "module " + module, Load: load}
+	absFile, err := filepath.Abs(file)
+	if err != nil {
+		panic(err)
+	}
+	newLoader := loader{basePath: filepath.Dir(absFile)}
+	thread := &starlark.Thread{Name: "module " + module, Load: newLoader.Load}
 	globals, err := starlark.ExecFile(thread, file, nil, nil)
 
 	return globals, err
@@ -91,7 +98,6 @@ func parsePragmas(path string) (Pragmas, error) {
 
 // Execute Starlark program in a file.
 func execFile(path string) {
-	basePath = filepath.Dir(path)
 
 	pragmas, err := parsePragmas(path)
 	if err != nil {
@@ -103,8 +109,12 @@ func execFile(path string) {
 	} else if *pragmas.version != 0 {
 		panic("unsupported warplark version")
 	}
-
-	thread := &starlark.Thread{Name: "my thread", Load: load}
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		panic(err)
+	}
+	newLoader := loader{basePath: filepath.Dir(absPath)}
+	thread := &starlark.Thread{Name: "my thread", Load: newLoader.Load}
 	globals, err := starlark.ExecFile(thread, path, nil, starlark.StringDict{"json": json.Module})
 	if err != nil {
 		panic(err)
