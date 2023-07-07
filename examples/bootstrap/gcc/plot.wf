@@ -1,20 +1,26 @@
 {
 	"plot.v1": {
 		"inputs": {},
-		"outputs": {},
+		"outputs": {
+			"out": "pipe:pack:out"
+		},
 		"steps": {
 			"build": {
 				"protoformula": {
 					"action": {
 						"script": {
 							"contents": [
+								"set -euo pipefail",
+								"export BOOT_CFLAGS=\"$CFLAGS\"",
+								"export BOOT_LDFLAGS=\"$LDFLAGS\"",
+								"export LDFLAGS_FOR_TARGET=\"$LDFLAGS\"",
 								"cd /src/*",
 								"cp -vpR -v /pkg/warpsys.org/mpfr/* mpfr",
 								"cp -vpR -v /pkg/warpsys.org/gmp/* gmp",
 								"cp -vpR -v /pkg/warpsys.org/mpc/* mpc",
 								"mkdir /prefix/build",
 								"cd /prefix/build",
-								"/src/*/configure --prefix=/warpsys-placeholder-prefix --disable-multilib --enable-languages=c,c++ LDFLAGS=-Wl,-rpath=XORIGIN/../lib",
+								"/src/*/configure --prefix=/warpsys-placeholder-prefix --disable-multilib --enable-languages=c,c++ LDFLAGS=$LDFLAGS",
 								"make",
 								"make DESTDIR=/out install"
 							],
