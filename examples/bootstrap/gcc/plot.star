@@ -36,6 +36,24 @@ step_pack = bootstrap_pack_step(binaries=["gcc"],
                                 ])
 
 result = plot(
-    steps={"build": step_build, "pack": step_pack},
+    steps={
+        "build": step_build,
+        "pack": step_pack,
+        "test":  {"protoformula": {
+            "inputs": {
+                "/": "catalog:warpsys.org/busybox:v1.35.0-2:amd64-static",
+                "/app/binutils": "catalog:warpsys.org/bootstrap/binutils:v2.38:amd64",
+                "/testme": "pipe:pack:out"
+            },
+            "action": {"script": {
+                "interpreter": "/bin/sh",
+                "contents": [
+                    "/app/binutils/bin/readelf -d /testme/dynbin/gcc",
+                    "/testme/bin/gcc"
+                ]
+            }},
+            "outputs": {}
+        }},
+    },
     outputs={"out":"pipe:pack:out"},
 )
