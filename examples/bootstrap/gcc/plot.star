@@ -12,13 +12,16 @@ step_build = bootstrap_build_step(
         ("warpsys.org/mpc", "v1.2.1", "src"),
     ],
     script=[
-        "set -euo pipefail",
-        "export BOOT_CFLAGS=\"$CFLAGS\"",
-        "export BOOT_LDFLAGS=\"$LDFLAGS\"",
-        "export LDFLAGS_FOR_TARGET=\"$LDFLAGS\"",
-        "cd /src/*", "cp -vpR -v /pkg/warpsys.org/mpfr/* mpfr",
+        "set -eu",
+        #"export BOOT_CFLAGS=\"$CFLAGS\"", # We don't have any of these, at present.
+        # LDFLAGS, though, is important: This contains the XORIGIN hack.  The bootstrap lark lib inserted it already.
+        "export BOOT_LDFLAGS=\"$LDFLAGS\"", # This is a GCC special sauce for "phase 2".
+        "export LDFLAGS_FOR_TARGET=\"$LDFLAGS\"", # This is a GCC special sauce for "phase 3".
+        "cd /src/*",
+        "cp -vpR -v /pkg/warpsys.org/mpfr/* mpfr", # FUTURE: can this be replaced with symlinks?  wasteful of time.
         "cp -vpR -v /pkg/warpsys.org/gmp/* gmp",
-        "cp -vpR -v /pkg/warpsys.org/mpc/* mpc", "mkdir /prefix/build",
+        "cp -vpR -v /pkg/warpsys.org/mpc/* mpc",
+        "mkdir -p /prefix/build",
         "cd /prefix/build",
         "/src/*/configure --prefix=/warpsys-placeholder-prefix --disable-multilib --enable-languages=c,c++ LDFLAGS=$LDFLAGS",
         "make", "make DESTDIR=/out install"
@@ -33,6 +36,6 @@ step_pack = bootstrap_pack_step(binaries=["gcc"],
                                 ])
 
 result = plot(
-    steps={"build": step_build, "pack": step_pack}, 
+    steps={"build": step_build, "pack": step_pack},
     outputs={"out":"pipe:pack:out"},
 )
