@@ -18,8 +18,9 @@
 								"cp -vpR -v /pkg/warpsys.org/gmp/* gmp",
 								"cp -vpR -v /pkg/warpsys.org/mpc/* mpc",
 								"mkdir -p /prefix/build",
+								"echo \"ld -rpath=XORIGIN/../lib \\$@\" > /prefix/cursed-ld ; chmod +x /prefix/cursed-ld",
 								"cd /prefix/build",
-								"/src/*/configure --prefix=/warpsys-placeholder-prefix --disable-multilib --enable-languages=c,c++ LDFLAGS=$LDFLAGS",
+								"/src/*/configure --prefix=/warpsys-placeholder-prefix --disable-bootstrap --disable-multilib --enable-languages=c,c++ --with-ld=/prefix/cursed-ld LDFLAGS=$LDFLAGS",
 								"make",
 								"make DESTDIR=/out install"
 							],

@@ -22,8 +22,12 @@ step_build = bootstrap_build_step(
         "cp -vpR -v /pkg/warpsys.org/gmp/* gmp",
         "cp -vpR -v /pkg/warpsys.org/mpc/* mpc",
         "mkdir -p /prefix/build",
+        # Create an extremely cursed ld shim, because I can't figure how how to get flags through gcc any other way.
+        # (This doesn't use our existing $LDFLAGS var because that contains "-Wl," preambles, which aren't necessary when pushing the flags in at this depth.)
+	"echo \"ld -rpath=XORIGIN/../lib \\$@\" > /prefix/cursed-ld ; chmod +x /prefix/cursed-ld",
         "cd /prefix/build",
-        "/src/*/configure --prefix=/warpsys-placeholder-prefix --disable-multilib --enable-languages=c,c++ LDFLAGS=$LDFLAGS",
+	# Disabling "boostrap" saves time and skips a step that's not interesting to us.  (We check sanity in other ways.)
+        "/src/*/configure --prefix=/warpsys-placeholder-prefix --disable-bootstrap --disable-multilib --enable-languages=c,c++ --with-ld=/prefix/cursed-ld LDFLAGS=$LDFLAGS",
         "make", "make DESTDIR=/out install"
     ])
 
