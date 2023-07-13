@@ -53,7 +53,7 @@ result = plot(
                 "interpreter": "/bin/sh",
                 "contents": [
                     "/app/binutils/bin/readelf -d /testme/dynbin/gcc",
-                    "/testme/bin/gcc"
+                    "/testme/bin/gcc --version"
                 ]
             }},
             "outputs": {}
