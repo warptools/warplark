@@ -55,8 +55,9 @@
 								"cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib",
 								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 /pack/lib",
 								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libm.so.6 /pack/lib",
-								"mv /pack/bin/gcc /pack/dynbin",
-								"cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/gcc",
+								"find -P /pack/bin -type f -executable | xargs grep -l '^.ELF...' >/tmp/pack_bin_list",
+								"xargs -I_ -a /tmp/pack_bin_list mv _ /pack/dynbin/",
+								"xargs -I_ -a /tmp/pack_bin_list cp /pkg/warpsys.org/bootstrap/ldshim/ldshim _",
 								"sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*"
 							],
 							"interpreter": "/bin/sh"

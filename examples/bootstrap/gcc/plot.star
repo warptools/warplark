@@ -2,7 +2,7 @@
 load("../../warpsys.star", "plot")
 load("../../warpsys.star", "catalog_input_str")
 load("../bootstrap.star", "bootstrap_build_step")
-load("../bootstrap.star", "bootstrap_pack_step")
+load("../bootstrap.star", "bootstrap_auto_pack_step")
 
 step_build = bootstrap_build_step(
     src=("warpsys.org/gcc", "v11.2.0", "src"),
@@ -24,20 +24,20 @@ step_build = bootstrap_build_step(
         "mkdir -p /prefix/build",
         # Create an extremely cursed ld shim, because I can't figure how how to get flags through gcc any other way.
         # (This doesn't use our existing $LDFLAGS var because that contains "-Wl," preambles, which aren't necessary when pushing the flags in at this depth.)
-	"echo \"ld -rpath=XORIGIN/../lib \\$@\" > /prefix/cursed-ld ; chmod +x /prefix/cursed-ld",
+        "echo \"ld -rpath=XORIGIN/../lib \\$@\" > /prefix/cursed-ld ; chmod +x /prefix/cursed-ld",
         "cd /prefix/build",
-	# Disabling "boostrap" saves time and skips a step that's not interesting to us.  (We check sanity in other ways.)
+        # Disabling "boostrap" saves time and skips a step that's not interesting to us.  (We check sanity in other ways.)
         "/src/*/configure --prefix=/warpsys-placeholder-prefix --disable-bootstrap --disable-multilib --enable-languages=c,c++ --with-ld=/prefix/cursed-ld LDFLAGS=$LDFLAGS",
         "make", "make DESTDIR=/out install"
     ])
 
-step_pack = bootstrap_pack_step(binaries=["gcc"],
-                                libraries=[
+step_pack = bootstrap_auto_pack_step(libraries=[
                                     ("warpsys.org/bootstrap/glibc",
                                      "libc.so.6"),
                                     ("warpsys.org/bootstrap/glibc",
                                      "libm.so.6"),
                                 ])
+
 
 result = plot(
     steps={
