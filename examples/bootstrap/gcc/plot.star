@@ -31,7 +31,9 @@ step_build = bootstrap_build_step(
         "make", "make DESTDIR=/out install"
     ])
 
-step_pack = bootstrap_auto_pack_step(libraries=[
+step_pack = bootstrap_auto_pack_step(
+                            pathmap={"bin":"dynbin", "libexec": "dynlibexec"},
+                            libraries=[
                                     ("warpsys.org/bootstrap/glibc",
                                      "libc.so.6"),
                                     ("warpsys.org/bootstrap/glibc",

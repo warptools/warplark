@@ -105,9 +105,17 @@ def bootstrap_pack_step(binaries, libraries=[], extra_script=[]):
     }
 
 
-# bootstrap_auto_pack will attempt to detect and move all ELF executable files
-# /pack/bin to /pack/dynbin. The /pack/bin directory will then be repopulated with shims for those files.
-def bootstrap_auto_pack_step(libraries=[], extra_script=[]):
+# bootstrap_auto_pack will attempt to detect and move all ELF executable files.
+# pathmap selects the paths to map, by default the pathmap will be {"bin": "dynbin"}
+# meaning that all ELF binaries in /pack/bin will be mapped to /pack/dynbin recursively.
+# '/pack/bin/some-other-dir/myexec' should map to '/pack/dynbin/some-other-dir/myexec'.
+# The /pack/bin directory will then be repopulated with shims for the moved files.
+def bootstrap_auto_pack_step(pathmap={}, libraries=[], extra_script=[]):
+    if len(pathmap) == 0:
+        pathmap = {
+            "bin": "dynbin",
+        }
+
     # list of dependencies needed for packing
     pack_deps = [
         ("warpsys.org/bootstrap/ldshim", "v1.0", "amd64"),
@@ -128,7 +136,7 @@ def bootstrap_auto_pack_step(libraries=[], extra_script=[]):
 
     # create dirs for packing, copy ld to our package as a library
     script = [
-        "mkdir -vp /pack/lib", "mkdir -vp /pack/dynbin",
+        "mkdir -vp /pack/lib",
         "cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib"
     ]
 
@@ -140,19 +148,22 @@ def bootstrap_auto_pack_step(libraries=[], extra_script=[]):
 
     # detect ELF binaries
     # for each, move the binary to dynbin and add an ldshim in bin
-    script.extend([
-        # ELF header begins with [0x7F, E, L, F, 0x01|0x02, 0x01|0x02, 0x01]
-        # Matching at least this should be sufficient to call it an ELF file.
-        "find -P /pack/bin -type f -executable | xargs grep -l '^.ELF...' >/tmp/pack_bin_list",
-        "xargs -I_ -a /tmp/pack_bin_list mv _ /pack/dynbin/",
-        "xargs -I_ -a /tmp/pack_bin_list cp /pkg/warpsys.org/bootstrap/ldshim/ldshim _",
-    ])
+    for binsrc, target in pathmap.items():
+        script.extend([
+            # ELF header begins with [0x7F, E, L, F, 0x01|0x02, 0x01|0x02, 0x01]
+            # Matching at least this should be sufficient to call it an ELF file.
+            "find -P /pack/{binsrc} -type f -executable | xargs grep -l '^.ELF...' >/tmp/pack_bin_list".format(binsrc=binsrc),
+            "xargs -a /tmp/pack_bin_list realpath --relative-to=/pack/{binsrc} >/tmp/pack_bin_rel".format(binsrc=binsrc),
+            "xargs -a /tmp/pack_bin_rel dirname | sort | uniq >/tmp/pack_bin_dirs",
+            "xargs -I_ -a /tmp/pack_bin_dirs mkdir -vp /pack/{target}/_".format(target=target),
+            "xargs -t -I_ -a /tmp/pack_bin_rel mv /pack/{binsrc}/_ /pack/{target}/_".format(binsrc=binsrc, target=target),
+            "xargs -t -I_ -a /tmp/pack_bin_rel cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/{binsrc}/_".format(binsrc=binsrc),
+            # apply XORIGIN hack to all dynbin binaries
+            "xargs -t -I_ -a /tmp/pack_bin_rel sed -i '0,/XORIGIN/{{s/XORIGIN/$ORIGIN/}}' /pack/{target}/_".format(target=target),
+        ])
 
     # add any extra script actions from the user
     script = script + extra_script
-
-    # apply XORIGIN hack to all dynbin binaries
-    script.append("sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*")
 
     # create and return the protoformula
     return {

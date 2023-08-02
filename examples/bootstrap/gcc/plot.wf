@@ -51,14 +51,23 @@
 						"script": {
 							"contents": [
 								"mkdir -vp /pack/lib",
-								"mkdir -vp /pack/dynbin",
 								"cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib",
 								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 /pack/lib",
 								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libm.so.6 /pack/lib",
 								"find -P /pack/bin -type f -executable | xargs grep -l '^.ELF...' >/tmp/pack_bin_list",
-								"xargs -I_ -a /tmp/pack_bin_list mv _ /pack/dynbin/",
-								"xargs -I_ -a /tmp/pack_bin_list cp /pkg/warpsys.org/bootstrap/ldshim/ldshim _",
-								"sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*"
+								"xargs -a /tmp/pack_bin_list realpath --relative-to=/pack/bin >/tmp/pack_bin_rel",
+								"xargs -a /tmp/pack_bin_rel dirname | sort | uniq >/tmp/pack_bin_dirs",
+								"xargs -I_ -a /tmp/pack_bin_dirs mkdir -vp /pack/dynbin/_",
+								"xargs -t -I_ -a /tmp/pack_bin_rel mv /pack/bin/_ /pack/dynbin/_",
+								"xargs -t -I_ -a /tmp/pack_bin_rel cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/_",
+								"xargs -t -I_ -a /tmp/pack_bin_rel sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/_",
+								"find -P /pack/libexec -type f -executable | xargs grep -l '^.ELF...' >/tmp/pack_bin_list",
+								"xargs -a /tmp/pack_bin_list realpath --relative-to=/pack/libexec >/tmp/pack_bin_rel",
+								"xargs -a /tmp/pack_bin_rel dirname | sort | uniq >/tmp/pack_bin_dirs",
+								"xargs -I_ -a /tmp/pack_bin_dirs mkdir -vp /pack/dynlibexec/_",
+								"xargs -t -I_ -a /tmp/pack_bin_rel mv /pack/libexec/_ /pack/dynlibexec/_",
+								"xargs -t -I_ -a /tmp/pack_bin_rel cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/libexec/_",
+								"xargs -t -I_ -a /tmp/pack_bin_rel sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynlibexec/_"
 							],
 							"interpreter": "/bin/sh"
 						}
