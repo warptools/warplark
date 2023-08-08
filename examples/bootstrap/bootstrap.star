@@ -110,11 +110,9 @@ def bootstrap_pack_step(binaries, libraries=[], extra_script=[]):
 # meaning that all ELF binaries in /pack/bin will be mapped to /pack/dynbin recursively.
 # '/pack/bin/some-other-dir/myexec' should map to '/pack/dynbin/some-other-dir/myexec'.
 # The /pack/bin directory will then be repopulated with shims for the moved files.
-def bootstrap_auto_pack_step(pathmap={}, libraries=[], extra_script=[]):
-    if len(pathmap) == 0:
-        pathmap = {
-            "bin": "dynbin",
-        }
+def bootstrap_auto_pack_step(binpaths=[], libraries=[], extra_script=[]):
+    if len(binpaths) == 0:
+        binpaths = ["bin"]
 
     # list of dependencies needed for packing
     pack_deps = [
@@ -134,32 +132,40 @@ def bootstrap_auto_pack_step(pathmap={}, libraries=[], extra_script=[]):
     # add the output of our build to the inputs
     inputs["/pack"] = "pipe:build:out"
 
-    # create dirs for packing, copy ld to our package as a library
-    script = [
-        "mkdir -vp /pack/lib",
-        "cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib"
-    ]
-
-    # iterate over the libraries to pack as a (module_name, library_name) tuple
-    # for each, create a cp command to add to our package
-    for lib in libraries:
-        script.append("cp /pkg/{module}/lib/{library} /pack/lib".format(
-            module=lib[0], library=lib[1]))
-
     # detect ELF binaries
     # for each, move the binary to dynbin and add an ldshim in bin
-    for binsrc, target in pathmap.items():
+    script = ["set -eu"]
+    for binpath in binpaths:
         script.extend([
             # ELF header begins with [0x7F, E, L, F, 0x01|0x02, 0x01|0x02, 0x01]
             # Matching at least this should be sufficient to call it an ELF file.
-            "find -P /pack/{binsrc} -type f -executable | xargs grep -l '^.ELF...' >/tmp/pack_bin_list".format(binsrc=binsrc),
-            "xargs -a /tmp/pack_bin_list realpath --relative-to=/pack/{binsrc} >/tmp/pack_bin_rel".format(binsrc=binsrc),
-            "xargs -a /tmp/pack_bin_rel dirname | sort | uniq >/tmp/pack_bin_dirs",
-            "xargs -I_ -a /tmp/pack_bin_dirs mkdir -vp /pack/{target}/_".format(target=target),
-            "xargs -t -I_ -a /tmp/pack_bin_rel mv /pack/{binsrc}/_ /pack/{target}/_".format(binsrc=binsrc, target=target),
-            "xargs -t -I_ -a /tmp/pack_bin_rel cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/{binsrc}/_".format(binsrc=binsrc),
-            # apply XORIGIN hack to all dynbin binaries
-            "xargs -t -I_ -a /tmp/pack_bin_rel sed -i '0,/XORIGIN/{{s/XORIGIN/$ORIGIN/}}' /pack/{target}/_".format(target=target),
+            "find -P /pack/{binpath} -type f -executable | xargs grep -l '^.ELF...' >/tmp/pack_bin_list".format(binpath=binpath),
+            # Create lib/dynbin directories
+            "xargs -a /tmp/pack_bin_list dirname | xargs dirname | sort | uniq >/tmp/pack_bin_dirs",
+            "xargs -I_ -a /tmp/pack_bin_dirs mkdir -vp _/lib",
+            "xargs -I_ -a /tmp/pack_bin_dirs mkdir -vp _/dynbin",
+        ])
+        # iterate over the libraries to pack as a (module_name, library_name) tuple
+        # for each, create a cp command to add to our package at
+        for lib in libraries:
+            script.append("xargs -t -I_ -a /tmp/pack_bin_dirs cp /pkg/{module}/lib/{library} _/lib".format(
+                module=lib[0], library=lib[1]))
+
+        script.extend([
+            # Add linker to lib dir
+            "xargs -t -I_ -a /tmp/pack_bin_dirs cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 _/lib",
+            # Move bin to dynbin and shim original locations
+            "while read -r binpath; do " + " ; ".join([
+                'dirpath=$(dirname $(dirname "${binpath}" ))',
+                'mv -v "$binpath" "${dirpath}/dynbin/"',
+                'cp -v /pkg/warpsys.org/bootstrap/ldshim/ldshim "${binpath}"',
+                "done < /tmp/pack_bin_list",
+            ]),
+            "while read -r dirpath; do " + " ; ".join([
+                # apply XORIGIN hack to all dynbin binaries
+                "sed -i '0,/XORIGIN/{{s/XORIGIN/$ORIGIN/}}' ${dirpath}/dynbin/*",
+                "done < /tmp/pack_bin_dirs",
+            ])
         ])
 
     # add any extra script actions from the user

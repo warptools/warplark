@@ -32,12 +32,14 @@ step_build = bootstrap_build_step(
     ])
 
 step_pack = bootstrap_auto_pack_step(
-                            pathmap={"bin":"dynbin", "libexec": "dynlibexec"},
+                            binpaths=["bin", "libexec"],
                             libraries=[
                                     ("warpsys.org/bootstrap/glibc",
                                      "libc.so.6"),
                                     ("warpsys.org/bootstrap/glibc",
                                      "libm.so.6"),
+                                    ("warpsys.org/bootstrap/glibc",
+                                    "libdl.so.2"),
                                 ])
 
 
