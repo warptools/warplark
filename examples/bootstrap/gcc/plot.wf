@@ -1,20 +1,26 @@
 {
 	"plot.v1": {
 		"inputs": {},
-		"outputs": {},
+		"outputs": {
+			"out": "pipe:pack:out"
+		},
 		"steps": {
 			"build": {
 				"protoformula": {
 					"action": {
 						"script": {
 							"contents": [
+								"set -eu",
+								"export BOOT_LDFLAGS=\"$LDFLAGS\"",
+								"export LDFLAGS_FOR_TARGET=\"$LDFLAGS\"",
 								"cd /src/*",
 								"cp -vpR -v /pkg/warpsys.org/mpfr/* mpfr",
 								"cp -vpR -v /pkg/warpsys.org/gmp/* gmp",
 								"cp -vpR -v /pkg/warpsys.org/mpc/* mpc",
-								"mkdir /prefix/build",
+								"mkdir -p /prefix/build",
+								"echo \"ld -rpath=XORIGIN/../lib \\$@\" > /prefix/cursed-ld ; chmod +x /prefix/cursed-ld",
 								"cd /prefix/build",
-								"/src/*/configure --prefix=/warpsys-placeholder-prefix --disable-multilib --enable-languages=c,c++ LDFLAGS=-Wl,-rpath=XORIGIN/../lib",
+								"/src/*/configure --prefix=/warpsys-placeholder-prefix --disable-bootstrap --disable-multilib --enable-languages=c,c++ --with-ld=/prefix/cursed-ld LDFLAGS=$LDFLAGS",
 								"make",
 								"make DESTDIR=/out install"
 							],
@@ -44,14 +50,27 @@
 					"action": {
 						"script": {
 							"contents": [
-								"mkdir -vp /pack/lib",
-								"mkdir -vp /pack/dynbin",
-								"cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 /pack/lib",
-								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 /pack/lib",
-								"cp /pkg/warpsys.org/bootstrap/glibc/lib/libm.so.6 /pack/lib",
-								"mv /pack/bin/gcc /pack/dynbin",
-								"cp /pkg/warpsys.org/bootstrap/ldshim/ldshim /pack/bin/gcc",
-								"sed -i '0,/XORIGIN/{s/XORIGIN/$ORIGIN/}' /pack/dynbin/*"
+								"set -eu",
+								"find -P /pack/bin -type f -executable | xargs grep -l '^.ELF...' >/tmp/pack_bin_list",
+								"xargs -a /tmp/pack_bin_list dirname | xargs dirname | sort | uniq >/tmp/pack_bin_dirs",
+								"xargs -I_ -a /tmp/pack_bin_dirs mkdir -vp _/lib",
+								"xargs -I_ -a /tmp/pack_bin_dirs mkdir -vp _/dynbin",
+								"xargs -t -I_ -a /tmp/pack_bin_dirs cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 _/lib",
+								"xargs -t -I_ -a /tmp/pack_bin_dirs cp /pkg/warpsys.org/bootstrap/glibc/lib/libm.so.6 _/lib",
+								"xargs -t -I_ -a /tmp/pack_bin_dirs cp /pkg/warpsys.org/bootstrap/glibc/lib/libdl.so.2 _/lib",
+								"xargs -t -I_ -a /tmp/pack_bin_dirs cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 _/lib",
+								"while read -r binpath; do dirpath=$(dirname $(dirname \"${binpath}\" )) ; mv -v \"$binpath\" \"${dirpath}/dynbin/\" ; cp -v /pkg/warpsys.org/bootstrap/ldshim/ldshim \"${binpath}\" ; done < /tmp/pack_bin_list",
+								"while read -r dirpath; do sed -i '0,/XORIGIN/{{s/XORIGIN/$ORIGIN/}}' ${dirpath}/dynbin/* ; done < /tmp/pack_bin_dirs",
+								"find -P /pack/libexec -type f -executable | xargs grep -l '^.ELF...' >/tmp/pack_bin_list",
+								"xargs -a /tmp/pack_bin_list dirname | xargs dirname | sort | uniq >/tmp/pack_bin_dirs",
+								"xargs -I_ -a /tmp/pack_bin_dirs mkdir -vp _/lib",
+								"xargs -I_ -a /tmp/pack_bin_dirs mkdir -vp _/dynbin",
+								"xargs -t -I_ -a /tmp/pack_bin_dirs cp /pkg/warpsys.org/bootstrap/glibc/lib/libc.so.6 _/lib",
+								"xargs -t -I_ -a /tmp/pack_bin_dirs cp /pkg/warpsys.org/bootstrap/glibc/lib/libm.so.6 _/lib",
+								"xargs -t -I_ -a /tmp/pack_bin_dirs cp /pkg/warpsys.org/bootstrap/glibc/lib/libdl.so.2 _/lib",
+								"xargs -t -I_ -a /tmp/pack_bin_dirs cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 _/lib",
+								"while read -r binpath; do dirpath=$(dirname $(dirname \"${binpath}\" )) ; mv -v \"$binpath\" \"${dirpath}/dynbin/\" ; cp -v /pkg/warpsys.org/bootstrap/ldshim/ldshim \"${binpath}\" ; done < /tmp/pack_bin_list",
+								"while read -r dirpath; do sed -i '0,/XORIGIN/{{s/XORIGIN/$ORIGIN/}}' ${dirpath}/dynbin/* ; done < /tmp/pack_bin_dirs"
 							],
 							"interpreter": "/bin/sh"
 						}
@@ -68,6 +87,25 @@
 							"packtype": "tar"
 						}
 					}
+				}
+			},
+			"test": {
+				"protoformula": {
+					"action": {
+						"script": {
+							"contents": [
+								"/app/binutils/bin/readelf -d /testme/dynbin/gcc",
+								"/testme/bin/gcc --version"
+							],
+							"interpreter": "/bin/sh"
+						}
+					},
+					"inputs": {
+						"/": "catalog:warpsys.org/busybox:v1.35.0-2:amd64-static",
+						"/app/binutils": "catalog:warpsys.org/bootstrap/binutils:v2.38:amd64",
+						"/testme": "pipe:pack:out"
+					},
+					"outputs": {}
 				}
 			}
 		}

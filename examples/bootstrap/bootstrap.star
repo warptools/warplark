@@ -103,3 +103,89 @@ def bootstrap_pack_step(binaries, libraries=[], extra_script=[]):
             }
         }
     }
+
+
+# bootstrap_auto_pack will attempt to detect and move all ELF executable files.
+# pathmap selects the paths to map, by default the pathmap will be {"bin": "dynbin"}
+# meaning that all ELF binaries in /pack/bin will be mapped to /pack/dynbin recursively.
+# '/pack/bin/some-other-dir/myexec' should map to '/pack/dynbin/some-other-dir/myexec'.
+# The /pack/bin directory will then be repopulated with shims for the moved files.
+def bootstrap_auto_pack_step(binpaths=[], libraries=[], extra_script=[]):
+    if len(binpaths) == 0:
+        binpaths = ["bin"]
+
+    # list of dependencies needed for packing
+    pack_deps = [
+        ("warpsys.org/bootstrap/ldshim", "v1.0", "amd64"),
+        ("warpsys.org/bootstrap/glibc", "v2.35", "amd64"),
+    ]
+
+    # create input map and $PATH
+    inputs = {}
+    # add the bootstrapping debian rootfs
+    inputs["/"] = catalog_input_str(
+        ("warpsys.org/bootstrap/debian", "bullseye-1646092800", "amd64"))
+    for dep in pack_deps:
+        path = "/pkg/" + dep[0]
+        inputs[path] = catalog_input_str(dep)
+
+    # add the output of our build to the inputs
+    inputs["/pack"] = "pipe:build:out"
+
+    # detect ELF binaries
+    # for each, move the binary to dynbin and add an ldshim in bin
+    script = ["set -eu"]
+    for binpath in binpaths:
+        script.extend([
+            # ELF header begins with [0x7F, E, L, F, 0x01|0x02, 0x01|0x02, 0x01]
+            # Matching at least this should be sufficient to call it an ELF file.
+            "find -P /pack/{binpath} -type f -executable | xargs grep -l '^.ELF...' >/tmp/pack_bin_list".format(binpath=binpath),
+            # Create lib/dynbin directories
+            "xargs -a /tmp/pack_bin_list dirname | xargs dirname | sort | uniq >/tmp/pack_bin_dirs",
+            "xargs -I_ -a /tmp/pack_bin_dirs mkdir -vp _/lib",
+            "xargs -I_ -a /tmp/pack_bin_dirs mkdir -vp _/dynbin",
+        ])
+        # iterate over the libraries to pack as a (module_name, library_name) tuple
+        # for each, create a cp command to add to our package at
+        for lib in libraries:
+            script.append("xargs -t -I_ -a /tmp/pack_bin_dirs cp /pkg/{module}/lib/{library} _/lib".format(
+                module=lib[0], library=lib[1]))
+
+        script.extend([
+            # Add linker to lib dir
+            "xargs -t -I_ -a /tmp/pack_bin_dirs cp /pkg/warpsys.org/bootstrap/glibc/lib/ld-linux-x86-64.so.2 _/lib",
+            # Move bin to dynbin and shim original locations
+            "while read -r binpath; do " + " ; ".join([
+                'dirpath=$(dirname $(dirname "${binpath}" ))',
+                'mv -v "$binpath" "${dirpath}/dynbin/"',
+                'cp -v /pkg/warpsys.org/bootstrap/ldshim/ldshim "${binpath}"',
+                "done < /tmp/pack_bin_list",
+            ]),
+            "while read -r dirpath; do " + " ; ".join([
+                # apply XORIGIN hack to all dynbin binaries
+                "sed -i '0,/XORIGIN/{{s/XORIGIN/$ORIGIN/}}' ${dirpath}/dynbin/*",
+                "done < /tmp/pack_bin_dirs",
+            ])
+        ])
+
+    # add any extra script actions from the user
+    script = script + extra_script
+
+    # create and return the protoformula
+    return {
+        "protoformula": {
+            "inputs": inputs,
+            "action": {
+                "script": {
+                    "interpreter": "/bin/sh",
+                    "contents": script
+                }
+            },
+            "outputs": {
+                "out": {
+                    "from": "/pack",
+                    "packtype": "tar",
+                }
+            }
+        }
+    }
