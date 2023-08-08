@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -20,6 +21,9 @@ type loader struct {
 	basePath string
 }
 
+// Load will start a starlark thread for a given module.
+// Warplark interprets "modules" to be filepaths.
+// Filepaths are scanned from the loader basepath+module name up to the root directory.
 func (l *loader) Load(_ *starlark.Thread, module string) (starlark.StringDict, error) {
 	// find the module file by checking parent directories
 	// until the first match is found
@@ -88,16 +92,16 @@ func parsePragmas(path string) (Pragmas, error) {
 				return Pragmas{}, fmt.Errorf("failed to parse version pragma. expected int, got %q", pragmaValue)
 			}
 			pragmas.version = &version
-		default:
-			return Pragmas{}, fmt.Errorf("unknown pragma %q at %s:%d", pragmaKey, path, lineNum)
+			continue
 		}
+		return Pragmas{}, fmt.Errorf("unknown pragma %q at %s:%d", pragmaKey, path, lineNum)
 	}
 
 	return pragmas, nil
 }
 
 // Execute Starlark program in a file.
-func execFile(path string) {
+func execFile(path string) error {
 
 	pragmas, err := parsePragmas(path)
 	if err != nil {
@@ -106,9 +110,11 @@ func execFile(path string) {
 
 	if pragmas.version == nil {
 		panic("no version pragma defined!")
-	} else if *pragmas.version != 0 {
+	}
+	if *pragmas.version != 0 {
 		panic("unsupported warplark version")
 	}
+
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		panic(err)
@@ -117,7 +123,13 @@ func execFile(path string) {
 	thread := &starlark.Thread{Name: "my thread", Load: newLoader.Load}
 	globals, err := starlark.ExecFile(thread, path, nil, starlark.StringDict{"json": json.Module})
 	if err != nil {
-		panic(err)
+		switch serr := err.(type) {
+		case *starlark.EvalError:
+			log.Println(serr.Backtrace())
+			return err
+		}
+		log.Println("unrecognized starlark error type")
+		return err
 	}
 
 	// retrieve the starlark json functions
@@ -147,12 +159,18 @@ func execFile(path string) {
 
 	// print the result
 	fmt.Println(plotJson)
+	return nil
 }
 
 func main() {
+	log.SetFlags(0)
 	if len(os.Args) == 2 {
-		execFile(os.Args[1])
-	} else {
-		fmt.Printf("usage: %s [input file]\n", os.Args[0])
+		err := execFile(os.Args[1])
+		if err != nil {
+			log.Println(err)
+			os.Exit(1)
+		}
+		return
 	}
+	log.Printf("usage: %s [input file]\n", os.Args[0])
 }
